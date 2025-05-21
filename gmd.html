@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lista com For - API Fake</title>
+  <style>
+    .botao-excluir {
+      margin-left: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Minha Lista</h2>
+  <input type="text" id="itemInput" placeholder="Digite um item" />
+  <button onclick="adicionarItem()">Adicionar</button>
+  <ul id="listaExibicao"></ul>
+
+  <script>
+    // Simulação de API fake
+    const apiFake = (() => {
+      let db = []; // Banco de dados em memória
+      let idAtual = 1;
+
+      return {
+        // Busca todos os itens
+        get: () => Promise.resolve([...db]),
+
+        // Adiciona um novo item
+        post: (novoItem) => {
+          const item = { id: idAtual++, texto: novoItem };
+          db.push(item);
+          return Promise.resolve(item);
+        },
+
+        // Remove um item pelo ID
+        delete: (id) => {
+          db = db.filter((item) => item.id !== id);
+          return Promise.resolve();
+        },
+      };
+    })();
+
+    /**
+     * Atualiza a tela com base nos dados da API fake
+     */
+    async function atualizarTela() {
+      const ul = document.getElementById("listaExibicao");
+      ul.innerHTML = "";
+
+      const dados = await apiFake.get();
+
+      for (let i = 0; i < dados.length; i++) {
+        const item = dados[i];
+
+        const li = document.createElement("li");
+        li.textContent = item.texto;
+
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.classList.add("botao-excluir");
+        btnExcluir.onclick = () => excluirItem(item.id);
+
+        li.appendChild(btnExcluir);
+        ul.appendChild(li);
+      }
+    }
+
+    /**
+     * Adiciona um novo item via API fake
+     */
+    async function adicionarItem() {
+      const input = document.getElementById("itemInput");
+      const valor = input.value.trim();
+
+      if (valor) {
+        await apiFake.post(valor);
+        input.value = "";
+        await atualizarTela();
+      } else {
+        alert("Digite um item válido.");
+      }
+    }
+
+    /**
+     * Exclui um item da lista pela API fake
+     */
+    async function excluirItem(id) {
+      await apiFake.delete(id);
+      await atualizarTela();
+    }
+
+    // Carrega itens iniciais
+    (async () => {
+      await apiFake.post("Maçã");
+      await apiFake.post("Banana");
+      await apiFake.post("Uva");
+      await atualizarTela();
+    })();
+  </script>
+</body>
+</html>
